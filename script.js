@@ -1,86 +1,59 @@
-const statusDisplay = document.querySelector('.game--status');
+const timer = document.getElementById('timer');
+const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
+const resetButton = document.getElementById('reset');
 
-let gameActive = true;
-let currentPlayer = "X";
-let gameState = ["", "", "", "", "", "", "", "", ""];
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval;
 
-const winningMessage = () => `Player ${currentPlayer} has won!`;
-const drawMessage = () => `Game ended in a draw!`;
-const currentPlayerTurn = () => `It's ${currentPlayer}'s turn`;
 
-statusDisplay.innerHTML = currentPlayerTurn();
+function startTimer(){
+    startTime = Date.now() - elapsedTime
 
-const winningConditions = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6]
-];
+    timerInterval = setInterval( ()=> {
+        elapsedTime = Date.now() - startTime 
+        timer.textContent = formatTimer(elapsedTime);
+    }, 10)
 
-function handleCellPlayed(clickedCell, clickedCellIndex) {
-    gameState[clickedCellIndex] = currentPlayer;
-    clickedCell.innerHTML = currentPlayer;
+    startButton.disabled = true;
+    stopButton.disabled = false;
 }
 
-function handlePlayerChange() {
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    statusDisplay.innerHTML = currentPlayerTurn();
+function stopTimer(){
+    clearInterval(timerInterval);
+    startButton.disabled = false;
+    stopButton.disabled = true;
 }
 
-function handleResultValidation() {
-    let roundWon = false;
-    for(let i = 0; i <= 7; i++) {
-        const winCondition = winningConditions[i];
-        const a = gameState[winCondition[0]];
-        const b = gameState[winCondition[1]];
-        const c = gameState[winCondition[2]];
-        if(a === '' || b === '' || c === '')
-            continue;
-        if(a === b && b === c) {
-            roundWon = true;
-            break
-        }
-    }
+function resetTimer(){
+    clearInterval(timerInterval);
 
-    if(roundWon) {
-        statusDisplay.innerHTML = winningMessage();
-        gameActive = false;
-        return;
-    }
+    elapsedTime = 0;
+    timer.textContent = "00:00:00";
 
-    const roundDraw = !gameState.includes("");
-    if(roundDraw) {
-        statusDisplay.innerHTML = drawMessage();
-        gameActive = false;
-        return;
-    }
-
-    handlePlayerChange();
+    startButton.disabled = false;
+    stopButton.disabled = false;
 }
 
-function handleCellClick(clickedCellEvent) {
-    const clickedCell = clickedCellEvent.target;
-    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
-
-    if(gameState[clickedCellIndex] !== "" || !gameActive)
-        return;
-
-    handleCellPlayed(clickedCell, clickedCellIndex);
-    handleResultValidation();
-}
-
-function handleRestartGame() {
-    gameActive = true;
-    currentPlayer = "X";
-    gameState = ["", "", "", "", "", "", "", "", ""];
-    statusDisplay.innerHTML = currentPlayerTurn();
-    document.querySelectorAll('.cell').forEach(cell => cell.innerHTML = "");
+function formatTimer(elapsedTime){
+    const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
+    const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+    const mseconds = Math.floor((elapsedTime % 1000) / 10);
+    return (
+        (hours ? (hours > 9 ? hours : "0" + hours) : "00")
+        + ":" +
+        (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00")
+        + ":" +
+        (seconds ? (seconds > 9 ? seconds : "0" + seconds) : "00")
+        + "." +
+        (mseconds > 9 ? mseconds : "0" + mseconds));
 }
 
 
-document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', handleCellClick));
-document.querySelector('.game--restart').addEventListener('click', handleRestartGame);
+startButton.addEventListener('click', startTimer)
+stopButton.addEventListener('click', stopTimer)
+resetButton.addEventListener('click', resetTimer)
+
+// @bycapwan
